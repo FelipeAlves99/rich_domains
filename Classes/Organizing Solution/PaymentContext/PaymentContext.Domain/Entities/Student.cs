@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Flunt.Validations;
 using PaymentContext.Domain.ValueObjects;
 using PaymentContext.Shared.Entities;
 
@@ -15,6 +16,8 @@ namespace PaymentContext.Domain.Entities
             Document = document;
             Email = email;
             _subscriptions = new List<Subscription>();
+
+            AddNotifications(name, document, email);
         }
 
         public Name Name { get; private set; }
@@ -25,10 +28,21 @@ namespace PaymentContext.Domain.Entities
 
         public void AddSubscription(Subscription subscription)
         {
-            foreach (var sub in Subscriptions)
-                sub.Deactivate();
+            var hasSubscription = false;
+            foreach (var sub in _subscriptions)
+            {
+                if (sub.Active)
+                    hasSubscription = true;
+            }
 
-            _subscriptions.Add(subscription);
+            AddNotifications(new Contract()
+                .Requires()
+                .IsFalse(hasSubscription, "Student.Subscription", "Você já possuí uma assinatura ativa")
+            );
+
+            //Alternative method
+            if (hasSubscription)
+                AddNotification("Student.Subscription", "Você já possuí uma assinatura ativa");
         }
     }
 }
